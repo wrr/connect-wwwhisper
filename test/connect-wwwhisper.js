@@ -8,11 +8,21 @@ suite('connect-wwwhisper', function () {
   var WWWHISPER_PORT = 10000;
   var WWWHISPER_URL = 'http://localhost:' + WWWHISPER_PORT;
   var app_server;
-  var wwwhispser_server;
-  var auth_handler;
+  var auth_server;
+  var auth_call_count = 0;
+  var auth_handler = grant_access;
 
-  setup(function() {
-    process.env['WWWHISPER_URL'] = WWWHISPER_URL;
+  function wwwhisper_called() {
+    return auth_call_count > 0;
+  }
+
+  function grant_access(req, res) {
+    auth_call_count += 1;
+    res.writeHead(200, 'access granted');
+    res.end();
+  }
+
+  function setupAppServer() {
     var app = connect()
       .use(wwwhisper())
       .use(function(req, res){
@@ -20,36 +30,54 @@ suite('connect-wwwhisper', function () {
         res.end('<html><body><b>Protected site</body></html>');
       });
     app_server = http.createServer(app).listen(9999);
+  }
 
-    app = connect()
+  function setupAuthServer() {
+    var auth_app = connect()
       .use(function(req, res) {
         auth_handler(req, res);
       });
-    wwwhisper_server = http.createServer(app).listen(WWWHISPER_PORT);
+    auth_server = http.createServer(auth_app).listen(WWWHISPER_PORT);
+  }
+
+  setup(function() {
+    process.env['WWWHISPER_URL'] = WWWHISPER_URL;
+    wwwhisper_call_count = 0;
+    setupAppServer();
+    setupAuthServer();
   });
 
   teardown(function() {
     app_server.close();
-    wwwhisper_server.close();
+    auth_server.close();
   });
 
-  test('WWWHISPER_URL not set', function() {
+  test('WWWHISPER_URL required', function() {
     delete process.env['WWWHISPER_URL'];
     assert.throws(wwwhisper,
                   function(err) {
                     return ((err instanceof Error) &&
-                            /WWWHISPER_URL not set/.test(err));
+                            /WWWHISPER_URL nor WWWHISPER_DISABLE/.test(err));
                   });
   });
 
-  test('request authenticated', function(done) {
-    var wwwhisper_called = false;
-    auth_handler = function(req, res) {
-      wwwhisper_called = true;
-      res.end();
-    }
+  test('disable wwwhisper', function(done) {
+    delete process.env['WWWHISPER_URL'];
+    process.env['WWWHISPER_DISABLE'] = "1";
+    app_server.close();
+    setupAppServer();
     request('http://localhost:9999', function(error, response, body) {
-      assert.ok(wwwhisper_called);
+      assert(!wwwhisper_called());
+      assert.ifError(error);
+      assert.equal(response.statusCode, 200);
+      assert.notEqual(-1, response.body.indexOf('Protected site'));
+      done();
+    });
+  });
+
+  test('request authenticated', function(done) {
+    request('http://localhost:9999', function(error, response, body) {
+      assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
       assert.notEqual(-1, response.body.indexOf('Protected site'));
