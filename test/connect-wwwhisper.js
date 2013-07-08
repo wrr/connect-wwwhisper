@@ -12,6 +12,7 @@ suite('connect-wwwhisper', function () {
   var auth_server;
   var auth_call_count = 0;
   var auth_handler = grant_access;
+  var app_handler = html_doc;
 
   function wwwhisper_called() {
     return auth_call_count > 0;
@@ -23,12 +24,16 @@ suite('connect-wwwhisper', function () {
     res.end();
   }
 
+  function html_doc(req, res) {
+    res.writeHead(200, {'Content-Type': 'text/html'});
+    res.end('<html><body><b>Protected site</body></html>');
+  }
+
   function setupAppServer() {
     var app = connect()
       .use(wwwhisper())
       .use(function(req, res){
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.end('<html><body><b>Protected site</body></html>');
+        app_handler(req, res);
       });
     app_server = http.createServer(app).listen(9999);
   }
@@ -82,10 +87,16 @@ suite('connect-wwwhisper', function () {
       assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
       grant_access(req, res);
     }
+    app_handler = function(req, res) {
+      assert.equal(req.remoteUser, TEST_USER);
+      html_doc(req, res);
+    }
+
     request('http://localhost:9999' + path, function(error, response, body) {
       assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
+      assert.equal(response.headers['user'], TEST_USER);
       assert(response.body.indexOf('Protected site') >= 0);
       done();
     });
