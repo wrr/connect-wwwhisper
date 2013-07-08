@@ -7,6 +7,7 @@ var wwwhisper = require('../lib/connect-wwwhisper');
 suite('connect-wwwhisper', function () {
   var WWWHISPER_PORT = 10000;
   var WWWHISPER_URL = 'http://localhost:' + WWWHISPER_PORT;
+  var TEST_USER = 'foo@example.com';
   var app_server;
   var auth_server;
   var auth_call_count = 0;
@@ -18,7 +19,7 @@ suite('connect-wwwhisper', function () {
 
   function grant_access(req, res) {
     auth_call_count += 1;
-    res.writeHead(200, 'access granted');
+    res.writeHead(200, { User : TEST_USER });
     res.end();
   }
 
@@ -85,7 +86,7 @@ suite('connect-wwwhisper', function () {
       assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
-      assert.notEqual(-1, response.body.indexOf('Protected site'));
+      assert(response.body.indexOf('Protected site') >= 0);
       done();
     });
   });
