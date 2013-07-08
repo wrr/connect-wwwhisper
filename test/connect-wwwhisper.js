@@ -75,8 +75,13 @@ suite('connect-wwwhisper', function () {
     });
   });
 
-  test('request authenticated', function(done) {
-    request('http://localhost:9999', function(error, response, body) {
+  test('request allowed', function(done) {
+    var path = '/foo/bar';
+    auth_handler = function(req, res) {
+      assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
+      grant_access(req, res);
+    }
+    request('http://localhost:9999' + path, function(error, response, body) {
       assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
