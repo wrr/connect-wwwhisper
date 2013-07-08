@@ -11,22 +11,28 @@ suite('connect-wwwhisper', function () {
   var app_server;
   var auth_server;
   var auth_call_count = 0;
-  var auth_handler = grant_access;
+  var auth_handler = granted;
   var app_handler = html_doc;
 
   function wwwhisper_called() {
     return auth_call_count > 0;
   }
 
-  function grant_access(req, res) {
+  function granted(req, res) {
     auth_call_count += 1;
     res.writeHead(200, { User : TEST_USER });
     res.end();
   }
 
+  function open_location_granted(req, res) {
+    auth_call_count += 1;
+    res.writeHead(200);
+    res.end();
+  }
+
   function html_doc(req, res) {
     res.writeHead(200, {'Content-Type': 'text/html'});
-    res.end('<html><body><b>Protected site</body></html>');
+    res.end('<html><body><b>Hello World</body></html>');
   }
 
   function setupAppServer() {
@@ -76,7 +82,7 @@ suite('connect-wwwhisper', function () {
       assert(!wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
-      assert.notEqual(-1, response.body.indexOf('Protected site'));
+      assert.notEqual(-1, response.body.indexOf('Hello World'));
       done();
     });
   });
@@ -85,7 +91,7 @@ suite('connect-wwwhisper', function () {
     var path = '/foo/bar';
     auth_handler = function(req, res) {
       assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
-      grant_access(req, res);
+      granted(req, res);
     }
     app_handler = function(req, res) {
       assert.equal(req.remoteUser, TEST_USER);
@@ -97,8 +103,31 @@ suite('connect-wwwhisper', function () {
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['user'], TEST_USER);
-      assert(response.body.indexOf('Protected site') >= 0);
+      assert(response.body.indexOf('Hello World') >= 0);
       done();
     });
   });
+
+  test('open location request allowed', function(done) {
+    var path = '/';
+    auth_handler = function(req, res) {
+      assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
+      open_location_granted(req, res);
+    }
+
+    app_handler = function(req, res) {
+      assert.equal(req.remoteUser, undefined);
+      html_doc(req, res);
+    }
+
+    request('http://localhost:9999' + path, function(error, response, body) {
+      assert(wwwhisper_called());
+      assert.ifError(error);
+      assert.equal(response.statusCode, 200);
+      assert.equal(response.headers['user'], undefined);
+      assert(response.body.indexOf('Hello World') >= 0);
+      done();
+    });
+  });
+
 });
