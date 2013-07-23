@@ -258,8 +258,8 @@ suite('connect-wwwhisper', function () {
   test('auth cookies passed to wwwhisper', function(done) {
     var path = '/foo/bar';
     auth_handler = function(req, res) {
-      assert(req.headers['cookie'],
-             'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc');
+      assert.equal(req.headers['cookie'],
+                   'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc');
       granted(req, res);
     }
     app_handler = html_doc;
@@ -268,6 +268,30 @@ suite('connect-wwwhisper', function () {
       url: 'http://localhost:9999' + path,
       headers: {
         Cookie: 'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc'
+      }
+    };
+    request(req_options, function(error, response, body) {
+      assert(wwwhisper_called());
+      assert.equal(response.statusCode, 200);
+      assert(response.body.indexOf('Hello World') > -1);
+      done();
+    });
+  });
+
+  test('non wwwhisper cookies not passed to wwwhisper', function(done) {
+    var path = '/foo/bar';
+    auth_handler = function(req, res) {
+      assert.equal(req.headers['cookie'],
+                   'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc');
+      granted(req, res);
+    }
+    app_handler = html_doc;
+
+    var req_options = {
+      url: 'http://localhost:9999' + path,
+      headers: {
+        Cookie: 'session=123; wwwhisper-auth=xyz; ' +
+          'settings=foobar; wwwhisper-csrftoken=abc'
       }
     };
     request(req_options, function(error, response, body) {
