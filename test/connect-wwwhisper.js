@@ -143,14 +143,13 @@ suite('connect-wwwhisper', function () {
   });
 
   test('login required', function(done) {
-    var path = '/foo/bar';
     auth_handler = login_required;
     app_handler = function(req, res) {
       // Request should not be passed to the app.
       assert(false);
     }
 
-    request('http://localhost:9999' + path, function(error, response, body) {
+    request('http://localhost:9999/foo/bar', function(error, response, body) {
       assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 401);
@@ -161,14 +160,13 @@ suite('connect-wwwhisper', function () {
   });
 
   test('request denied', function(done) {
-    var path = '/foo/bar';
     auth_handler = denied;
     app_handler = function(req, res) {
       // Request should not be passed to the app.
       assert(false);
     }
 
-    request('http://localhost:9999' + path, function(error, response, body) {
+    request('http://localhost:9999/foo/bar', function(error, response, body) {
       assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 403);
@@ -179,11 +177,10 @@ suite('connect-wwwhisper', function () {
   });
 
   test('iframe injected to html response', function(done) {
-    var path = '/foo/bar';
     auth_handler = granted;
     app_handler = html_doc;
 
-    request('http://localhost:9999' + path, function(error, response, body) {
+    request('http://localhost:9999/foo/bar', function(error, response, body) {
       assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
@@ -194,7 +191,6 @@ suite('connect-wwwhisper', function () {
   });
 
   test('iframe injected to non-html response', function(done) {
-    var path = '/foo/bar';
     var body = '<html><body><b>Hello World</body></html>';
     auth_handler = granted;
     app_handler = function(req, res) {
@@ -203,7 +199,7 @@ suite('connect-wwwhisper', function () {
       res.end(body);
     }
 
-    request('http://localhost:9999' + path, function(error, response, body) {
+    request('http://localhost:9999/foo/bar', function(error, response, body) {
       assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
@@ -214,7 +210,6 @@ suite('connect-wwwhisper', function () {
 
 
   test('response body combined', function(done) {
-    var path = '/foo/bar';
     auth_handler = granted;
     app_handler = function(req, res) {
       res.writeHead(200, {'Content-Type': 'text/html'});
@@ -224,7 +219,7 @@ suite('connect-wwwhisper', function () {
       res.end();
     }
 
-    request('http://localhost:9999' + path, function(error, response, body) {
+    request('http://localhost:9999/foo/bar', function(error, response, body) {
       assert(wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
@@ -256,7 +251,6 @@ suite('connect-wwwhisper', function () {
   });
 
   test('auth cookies passed to wwwhisper', function(done) {
-    var path = '/foo/bar';
     auth_handler = function(req, res) {
       assert.equal(req.headers['cookie'],
                    'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc');
@@ -265,7 +259,7 @@ suite('connect-wwwhisper', function () {
     app_handler = html_doc;
 
     var req_options = {
-      url: 'http://localhost:9999' + path,
+      url: 'http://localhost:9999/foo/bar',
       headers: {
         Cookie: 'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc'
       }
@@ -279,7 +273,6 @@ suite('connect-wwwhisper', function () {
   });
 
   test('non wwwhisper cookies not passed to wwwhisper', function(done) {
-    var path = '/foo/bar';
     auth_handler = function(req, res) {
       assert.equal(req.headers['cookie'],
                    'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc');
@@ -288,7 +281,7 @@ suite('connect-wwwhisper', function () {
     app_handler = html_doc;
 
     var req_options = {
-      url: 'http://localhost:9999' + path,
+      url: 'http://localhost:9999/foo/bar',
       headers: {
         Cookie: 'session=123; wwwhisper-auth=xyz; ' +
           'settings=foobar; wwwhisper-csrftoken=abc'
@@ -298,6 +291,20 @@ suite('connect-wwwhisper', function () {
       assert(wwwhisper_called());
       assert.equal(response.statusCode, 200);
       assert(response.body.indexOf('Hello World') > -1);
+      done();
+    });
+  });
+
+  test('library version passed to wwwhisper', function(done) {
+    auth_handler = function(req, res) {
+      assert.equal(req.headers['user-agent'], 'node-1.1.1');
+      granted(req, res);
+    }
+    app_handler = html_doc;
+
+    request('http://localhost:9999/foo/bar', function(error, response, body) {
+      assert(wwwhisper_called());
+      assert.equal(response.statusCode, 200);
       done();
     });
   });
