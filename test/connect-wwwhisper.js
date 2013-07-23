@@ -94,7 +94,7 @@ suite('connect-wwwhisper', function () {
       assert(!wwwhisper_called());
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
-      assert.notEqual(-1, response.body.indexOf('Hello World'));
+      assert(response.body.indexOf('Hello World') > -1);
       done();
     });
   });
@@ -255,4 +255,26 @@ suite('connect-wwwhisper', function () {
     });
   });
 
+  test('auth cookies passed to wwwhisper', function(done) {
+    var path = '/foo/bar';
+    auth_handler = function(req, res) {
+      assert(req.headers['cookie'],
+             'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc');
+      granted(req, res);
+    }
+    app_handler = html_doc;
+
+    var req_options = {
+      url: 'http://localhost:9999' + path,
+      headers: {
+        Cookie: 'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc'
+      }
+    };
+    request(req_options, function(error, response, body) {
+      assert(wwwhisper_called());
+      assert.equal(response.statusCode, 200);
+      assert(response.body.indexOf('Hello World') > -1);
+      done();
+    });
+  });
 });
