@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "connect": ">= 2.7.2",
-    "connect-injector": ">= 0.2.1"
+    "connect-injector": ">= 0.2.1",
+    "URIjs": ">= 1.10.2"
   },
   "devDependencies": {
     "grunt": "~0.4.1",

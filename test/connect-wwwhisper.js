@@ -11,32 +11,32 @@ suite('connect-wwwhisper', function () {
   var app_server;
   var auth_server;
   var auth_call_count = 0;
-  var auth_handler = granted;
+  var auth_handler = grant;
   var app_handler = html_doc;
 
   function wwwhisper_called() {
     return auth_call_count > 0;
   }
 
-  function granted(req, res) {
+  function grant(req, res) {
     auth_call_count += 1;
     res.writeHead(200, { User : TEST_USER });
     res.end();
   }
 
-  function login_required(req, res) {
+  function request_login(req, res) {
     auth_call_count += 1;
     res.writeHead(401);
     res.end('Login required');
   }
 
-  function denied(req, res) {
+  function deny(req, res) {
     auth_call_count += 1;
     res.writeHead(403);
     res.end('Not authorized');
   }
 
-  function open_location_granted(req, res) {
+  function open_location_grant(req, res) {
     auth_call_count += 1;
     res.writeHead(200);
     res.end();
@@ -45,6 +45,10 @@ suite('connect-wwwhisper', function () {
   function html_doc(req, res) {
     res.writeHead(200, {'Content-Type': 'text/html'});
     res.end('<html><body><b>Hello World</body></html>');
+  }
+
+  function auth_query(path) {
+    return '/wwwhisper/auth/api/is-authorized/?path=' + path;
   }
 
   function setupAppServer() {
@@ -102,8 +106,9 @@ suite('connect-wwwhisper', function () {
   test('request allowed', function(done) {
     var path = '/foo/bar';
     auth_handler = function(req, res) {
-      assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
-      granted(req, res);
+      console.log('CALLLLLLED');
+      assert.equal(req.url, auth_query(path));
+      grant(req, res);
     }
     app_handler = function(req, res) {
       assert.equal(req.remoteUser, TEST_USER);
@@ -123,8 +128,8 @@ suite('connect-wwwhisper', function () {
   test('open location request allowed', function(done) {
     var path = '/';
     auth_handler = function(req, res) {
-      assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
-      open_location_granted(req, res);
+      assert.equal(req.url, auth_query(path));
+      open_location_grant(req, res);
     }
 
     app_handler = function(req, res) {
@@ -143,7 +148,7 @@ suite('connect-wwwhisper', function () {
   });
 
   test('login required', function(done) {
-    auth_handler = login_required;
+    auth_handler = request_login;
     app_handler = function(req, res) {
       // Request should not be passed to the app.
       assert(false);
@@ -160,7 +165,7 @@ suite('connect-wwwhisper', function () {
   });
 
   test('request denied', function(done) {
-    auth_handler = denied;
+    auth_handler = deny;
     app_handler = function(req, res) {
       // Request should not be passed to the app.
       assert(false);
@@ -177,7 +182,7 @@ suite('connect-wwwhisper', function () {
   });
 
   test('iframe injected to html response', function(done) {
-    auth_handler = granted;
+    auth_handler = grant;
     app_handler = html_doc;
 
     request('http://localhost:9999/foo/bar', function(error, response, body) {
@@ -192,7 +197,7 @@ suite('connect-wwwhisper', function () {
 
   test('iframe injected to non-html response', function(done) {
     var body = '<html><body><b>Hello World</body></html>';
-    auth_handler = granted;
+    auth_handler = grant;
     app_handler = function(req, res) {
       assert.equal(req.remoteUser, TEST_USER);
       res.writeHead(200, {'Content-Type': 'text/plain'});
@@ -210,7 +215,7 @@ suite('connect-wwwhisper', function () {
 
 
   test('response body combined', function(done) {
-    auth_handler = granted;
+    auth_handler = grant;
     app_handler = function(req, res) {
       res.writeHead(200, {'Content-Type': 'text/html'});
       res.write('abc');
@@ -254,7 +259,7 @@ suite('connect-wwwhisper', function () {
     auth_handler = function(req, res) {
       assert.equal(req.headers['cookie'],
                    'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc');
-      granted(req, res);
+      grant(req, res);
     }
     app_handler = html_doc;
 
@@ -276,7 +281,7 @@ suite('connect-wwwhisper', function () {
     auth_handler = function(req, res) {
       assert.equal(req.headers['cookie'],
                    'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc');
-      granted(req, res);
+      grant(req, res);
     }
     app_handler = html_doc;
 
@@ -298,7 +303,7 @@ suite('connect-wwwhisper', function () {
   test('library version passed to wwwhisper', function(done) {
     auth_handler = function(req, res) {
       assert.equal(req.headers['user-agent'], 'node-1.1.1');
-      granted(req, res);
+      grant(req, res);
     }
     app_handler = html_doc;
 
@@ -308,4 +313,54 @@ suite('connect-wwwhisper', function () {
       done();
     });
   });
+
+  function assert_path_normalized(requested_path, normalized_path) {
+    return function(done) {
+      auth_handler = function(req, res) {
+        assert.equal(req.url, auth_query(normalized_path));
+        grant(req, res);
+      }
+      app_handler = function(req, res) {
+        assert.equal(req.url, normalized_path);
+        html_doc(req, res);
+      }
+
+      request('http://localhost:9999' + requested_path,
+              function(error, response, body) {
+                assert(wwwhisper_called());
+                assert.equal(response.statusCode, 200);
+                assert.equal(response.headers['user'], TEST_USER);
+                assert(response.body.indexOf('Hello World') >= 0);
+                done();
+              });
+    }
+  }
+
+  // Separate tests are needed for each case below, because order of
+  // HTTP requests within a single test is not easily enforceable.
+  test('path normalization1',
+       assert_path_normalized('/', '/'));
+  test('path normalization2',
+       assert_path_normalized('/foo/bar', '/foo/bar'));
+  test('path normalization3',
+       assert_path_normalized('/foo/bar/', '/foo/bar/'));
+  test('path normalization4',
+       assert_path_normalized('/auth/api/login/../../../foo/', '/foo/'));
+  test('path normalization5',
+       assert_path_normalized('//', '/'));
+  test('path normalization6',
+       assert_path_normalized('', '/'));
+  test('path normalization7',
+       assert_path_normalized('/../', '/'));
+  test('path normalization8',
+       assert_path_normalized('/./././', '/'));
+  test('path normalization9',
+       assert_path_normalized('/./././', '/'));
+  test('path normalization10',
+       assert_path_normalized('/foo/./bar/../../bar', '/bar'));
+  // TODO:
+  //test('path normalization11',
+  //     assert_path_normalized('/foo/bar/..', '/foo/'));
+  //test('path normalization12',
+  //     assert_path_normalized('/./././/', '/'));
 });
