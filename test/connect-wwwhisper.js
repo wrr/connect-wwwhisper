@@ -205,4 +205,25 @@ suite('connect-wwwhisper', function () {
     });
   });
 
+  test('iframe injected to non-html response', function(done) {
+    var path = '/foo/bar';
+    var body = '<html><body><b>Hello World</body></html>';
+    auth_handler = function(req, res) {
+      assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
+      granted(req, res);
+    }
+    app_handler = function(req, res) {
+      assert.equal(req.remoteUser, TEST_USER);
+      res.writeHead(200, {'Content-Type': 'text/plain'});
+      res.end(body);
+    }
+
+    request('http://localhost:9999' + path, function(error, response, body) {
+      assert(wwwhisper_called());
+      assert.ifError(error);
+      assert.equal(response.statusCode, 200);
+      assert.equal(response.body, body);
+      done();
+    });
+  });
 });
