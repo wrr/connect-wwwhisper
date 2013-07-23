@@ -30,6 +30,12 @@ suite('connect-wwwhisper', function () {
     res.end('Login required');
   }
 
+  function denied(req, res) {
+    auth_call_count += 1;
+    res.writeHead(403);
+    res.end('Not authorized');
+  }
+
   function open_location_granted(req, res) {
     auth_call_count += 1;
     res.writeHead(200);
@@ -153,6 +159,48 @@ suite('connect-wwwhisper', function () {
       assert.equal(response.statusCode, 401);
       assert.equal(response.headers['user'], undefined);
       assert(response.body.indexOf('Login required') >= 0);
+      done();
+    });
+  });
+
+  test('request denied', function(done) {
+    var path = '/foo/bar';
+    auth_handler = function(req, res) {
+      assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
+      denied(req, res);
+    }
+    app_handler = function(req, res) {
+      // Request should not be passed to the app.
+      assert(false);
+    }
+
+    request('http://localhost:9999' + path, function(error, response, body) {
+      assert(wwwhisper_called());
+      assert.ifError(error);
+      assert.equal(response.statusCode, 403);
+      assert.equal(response.headers['user'], undefined);
+      assert(response.body.indexOf('Not authorized') >= 0);
+      done();
+    });
+  });
+
+  test('iframe injected to html response', function(done) {
+    var path = '/foo/bar';
+    auth_handler = function(req, res) {
+      assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
+      granted(req, res);
+    }
+    app_handler = function(req, res) {
+      assert.equal(req.remoteUser, TEST_USER);
+      html_doc(req, res);
+    }
+
+    request('http://localhost:9999' + path, function(error, response, body) {
+      assert(wwwhisper_called());
+      assert.ifError(error);
+      assert.equal(response.statusCode, 200);
+      assert(response.body.indexOf('Hello World') >= 0);
+      assert(response.body.search(/<script.*src="\/wwwhisper.*/) >= 0);
       done();
     });
   });
