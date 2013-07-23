@@ -24,6 +24,12 @@ suite('connect-wwwhisper', function () {
     res.end();
   }
 
+  function login_required(req, res) {
+    auth_call_count += 1;
+    res.writeHead(401);
+    res.end('Login required');
+  }
+
   function open_location_granted(req, res) {
     auth_call_count += 1;
     res.writeHead(200);
@@ -126,6 +132,27 @@ suite('connect-wwwhisper', function () {
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['user'], undefined);
       assert(response.body.indexOf('Hello World') >= 0);
+      done();
+    });
+  });
+
+  test('login required', function(done) {
+    var path = '/foo/bar';
+    auth_handler = function(req, res) {
+      assert.equal(req.url, '/wwwhisper/auth/api/is-authorized/?path=' + path);
+      login_required(req, res);
+    }
+    app_handler = function(req, res) {
+      // Request should not be passed to the app.
+      assert(false);
+    }
+
+    request('http://localhost:9999' + path, function(error, response, body) {
+      assert(wwwhisper_called());
+      assert.ifError(error);
+      assert.equal(response.statusCode, 401);
+      assert.equal(response.headers['user'], undefined);
+      assert(response.body.indexOf('Login required') >= 0);
       done();
     });
   });
