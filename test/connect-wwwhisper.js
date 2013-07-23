@@ -232,4 +232,27 @@ suite('connect-wwwhisper', function () {
       done();
     });
   });
+
+  test('auth query not sent for login request', function(done) {
+    var path = '/wwwhisper/auth/api/login';
+    auth_handler = function(req, res) {
+      assert.equal(req.url, '/wwwhisper/auth/api/login');
+      assert.equal(req.remoteUser, undefined);
+      res.writeHead(200, {'Content-Type': 'text/plain'});
+      res.end('Login page');
+    }
+    app_handler = function(req, res) {
+      // Request should not be passed to the app.
+      assert(false);
+    };
+
+    request('http://localhost:9999' + path, function(error, response, body) {
+      assert.ifError(error);
+      assert.equal(response.statusCode, 200);
+      assert.equal(response.headers['user'], undefined);
+      assert(response.body, 'Login page');
+      done();
+    });
+  });
+
 });
