@@ -36,7 +36,12 @@
     "mocha": "*"
   },
   "scripts": {
-    "test": "mocha --ui tdd test/"
+    "test": "mocha -R list --ui tdd test/"
   },
-  "keywords": [ "connect", "middleware", "authentication", "authorization" ]
+  "keywords": [
+    "connect",
+    "middleware",
+    "authentication",
+    "authorization"
+  ]
 }
