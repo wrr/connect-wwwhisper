@@ -374,6 +374,7 @@ suite('connect-wwwhisper', function () {
       if (auth_call_count === 0) {
         grant(req, res);
       } else {
+        assert.equal(req.headers['x-requested-with'], 'XMLHttpRequest');
         auth_call_count += 1;
         res.writeHead(200, {'Content-Type': 'text/plain'});
         res.end('Admin page');
@@ -414,6 +415,37 @@ suite('connect-wwwhisper', function () {
       assert(wwwhisper_called());
       assert.equal(response.statusCode, 400);
       assert.equal(response.body, 'invalid request');
+      done();
+    });
+  });
+
+  test('site url passed to wwwhisper', function(done) {
+    // Checks that requests to auth and admin both carry Site-Url header.
+    var path = '/wwwhisper/admin/api/users/xyz';
+    auth_handler = function(req, res) {
+      assert.equal(req.headers['site-url'], 'https://localhost:9999');
+      if (auth_call_count === 0) {
+        grant(req, res);
+      } else {
+        res.writeHead(200);
+        res.end('Admin page');
+      }
+    };
+    app_handler = function() {
+      assert(false);
+    };
+
+    var req_options = {
+      url: 'http://localhost:9999' + path,
+      headers: {
+        'X-Forwarded-Proto': 'https',
+      }
+    };
+
+    request(req_options, function(error, response) {
+      assert.ifError(error);
+      assert.equal(response.statusCode, 200);
+      assert.equal(response.body, 'Admin page');
       done();
     });
   });
