@@ -213,7 +213,6 @@ suite('connect-wwwhisper', function () {
     });
   });
 
-
   test('response body combined', function(done) {
     auth_handler = grant;
     app_handler = function(req, res) {
@@ -396,6 +395,25 @@ suite('connect-wwwhisper', function () {
       assert.ifError(error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, 'Admin page');
+      done();
+    });
+  });
+
+  test('invalid auth request', function(done) {
+    var path = '/foo';
+    auth_handler = function(req, res) {
+      auth_call_count += 1;
+      res.writeHead(400);
+      res.end('invalid request');
+    };
+    app_handler = function() {
+      assert(false);
+    };
+
+    request('http://localhost:9999' + path, function(error, response) {
+      assert(wwwhisper_called());
+      assert.equal(response.statusCode, 400);
+      assert.equal(response.body, 'invalid request');
       done();
     });
   });
