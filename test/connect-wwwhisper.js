@@ -357,15 +357,36 @@ suite('connect-wwwhisper', function () {
        assert_path_normalized('/./././', '/'));
   test('path normalization10',
        assert_path_normalized('/foo/./bar/../../bar', '/bar'));
+  test('path normalization11',
+       assert_path_normalized('/./././/', '/'));
 
   // TODO: Not handled correctly, but this is not a critical issue,
   // because not normalized paths are rejected by wwwhisper with 403.
-  //test('path normalization11',
-  //     assert_path_normalized('/foo/bar/..', '/foo/'));
   //test('path normalization12',
-  //     assert_path_normalized('/./././/', '/'));
+  //     assert_path_normalized('/foo/bar/..', '/foo/'));
 
-  // TODO: test only path part passed to wwwhisper (without query).
+  test('query part not sent to wwwhisper', function(done) {
+    var query = 'what=xyz&abc=def';
+    var path = '/foo/';
+    var url = path + '?' + query;
+
+    auth_handler = function(req, res) {
+      assert.equal(req.url, auth_query(path));
+      grant(req, res);
+    };
+    app_handler = function(req, res) {
+      assert.equal(req.url, url);
+      html_doc(req, res);
+    };
+
+    request('http://localhost:9999' + url,
+            function(error, response) {
+              assert(wwwhisper_called());
+              assert.equal(response.statusCode, 200);
+              assert(response.body.indexOf('Hello World') >= 0);
+              done();
+            });
+  });
 
   test('admin request', function(done) {
     // Checks that requests to auth and admin are both passed to wwwhisper.
