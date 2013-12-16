@@ -482,4 +482,22 @@ suite('connect-wwwhisper', function () {
       done();
     });
   });
+
+  test('wwwhisper admin connection setup error', function(done) {
+    auth_handler = function(req, res) {
+      if (auth_call_count === 0) {
+        grant(req, res);
+        auth_server.close();
+        auth_server = null;
+      }
+    };
+    app_handler = function() {
+      assert(false);
+    };
+    request('http://localhost:9999/wwwhisper/admin', function(error, response) {
+      assert.equal(response.statusCode, 500);
+      assert.equal(response.body, 'request to wwwhisper failed');
+      done();
+    });
+  });
 });
