@@ -79,7 +79,9 @@ suite('connect-wwwhisper', function () {
 
   teardown(function() {
     app_server.close();
-    auth_server.close();
+    if (auth_server !== null) {
+      auth_server.close();
+    }
   });
 
   test('WWWHISPER_URL required', function() {
@@ -471,4 +473,13 @@ suite('connect-wwwhisper', function () {
     });
   });
 
+  test('auth server connection setup error', function(done) {
+    auth_server.close();
+    auth_server = null;
+    request('http://localhost:9999/foo', function(error, response) {
+      assert.equal(response.statusCode, 500);
+      assert.equal(response.body, 'auth request failed');
+      done();
+    });
+  });
 });

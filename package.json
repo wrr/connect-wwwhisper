@@ -3,10 +3,7 @@
   "description": "A middleware to authenticate and authorize requests via wwwhisper auth backend.",
   "version": "0.1.0",
   "homepage": "https://github.com/wrr/connect-wwwhisper",
-  "author": {
-    "name": "Jan Wrobel",
-    "email": "wrr@mixedbit.org"
-  },
+  "author": "Jan Wrobel <wrr@mixedbit.org>",
   "repository": {
     "type": "git",
     "url": "git://github.com/wrr/connect-wwwhisper.git"
@@ -27,6 +24,7 @@
   "dependencies": {
     "connect": ">= 2.7.2",
     "connect-injector": ">= 0.2.1",
+    "url": "*",
     "URIjs": ">= 1.10.2"
   },
   "devDependencies": {
@@ -43,5 +41,9 @@
     "middleware",
     "authentication",
     "authorization"
-  ]
+  ],
+  "directories": {
+    "test": "test"
+  },
+  "license": "BSD"
 }
