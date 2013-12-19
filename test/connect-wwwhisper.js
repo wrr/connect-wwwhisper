@@ -1,10 +1,9 @@
 var assert = require('assert');
 var connect = require('connect');
-var request = require('request');
 var http = require('http');
 var wwwhisper = require('../lib/connect-wwwhisper');
 
-suite('connect-wwwhisper', function () {
+suite('connect-wwwhisper', function() {
   var WWWHISPER_PORT = 10000;
   var WWWHISPER_URL = 'http://localhost:' + WWWHISPER_PORT;
   var TEST_USER = 'foo@example.com';
@@ -49,6 +48,29 @@ suite('connect-wwwhisper', function () {
 
   function auth_query(path) {
     return '/wwwhisper/auth/api/is-authorized/?path=' + path;
+  }
+
+  /**
+   * Wraps a request to provide synchronous access to a response body
+   * and error (ala 'requests' module
+   * https://github.com/mikeal/request).
+   */
+  function request(url, callback) {
+    var req = http.request(url, function(response) {
+      response.body = "";
+      response.error = false;
+      response.on('data', function(chunk) {
+        response.body += chunk;
+      });
+      response.on('end', function() {
+        callback(response);
+      });
+      response.on('error', function() {
+        callback(response);
+        response.error = true;
+      })
+    });
+    req.end();
   }
 
   function setupAppServer() {
@@ -98,9 +120,9 @@ suite('connect-wwwhisper', function () {
     process.env.WWWHISPER_DISABLE = '1';
     app_server.close();
     setupAppServer();
-    request('http://localhost:9999', function(error, response) {
+    request('http://localhost:9999', function(response) {
       assert(!wwwhisper_called());
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert(response.body.indexOf('Hello World') > -1);
       done();
@@ -118,9 +140,9 @@ suite('connect-wwwhisper', function () {
       html_doc(req, res);
     };
 
-    request('http://localhost:9999' + path, function(error, response) {
+    request('http://localhost:9999' + path, function(response) {
       assert(wwwhisper_called());
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['user'], TEST_USER);
       assert(response.body.indexOf('Hello World') >= 0);
@@ -140,9 +162,9 @@ suite('connect-wwwhisper', function () {
       html_doc(req, res);
     };
 
-    request('http://localhost:9999' + path, function(error, response) {
+    request('http://localhost:9999' + path, function(response) {
       assert(wwwhisper_called());
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['user'], undefined);
       assert(response.body.indexOf('Hello World') >= 0);
@@ -157,9 +179,9 @@ suite('connect-wwwhisper', function () {
       assert(false);
     };
 
-    request('http://localhost:9999/foo/bar', function(error, response) {
+    request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisper_called());
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 401);
       assert.equal(response.headers['user'], undefined);
       assert(response.body.indexOf('Login required') >= 0);
@@ -173,9 +195,9 @@ suite('connect-wwwhisper', function () {
       assert(false);
     };
 
-    request('http://localhost:9999/foo/bar', function(error, response) {
+    request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisper_called());
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 403);
       assert.equal(response.headers['user'], undefined);
       assert(response.body.indexOf('Not authorized') >= 0);
@@ -187,9 +209,9 @@ suite('connect-wwwhisper', function () {
     auth_handler = grant;
     app_handler = html_doc;
 
-    request('http://localhost:9999/foo/bar', function(error, response) {
+    request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisper_called());
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert(response.body.indexOf('Hello World') >= 0);
       assert(response.body.search(/<script.*src="\/wwwhisper.*/) >= 0);
@@ -206,9 +228,9 @@ suite('connect-wwwhisper', function () {
       res.end(body);
     };
 
-    request('http://localhost:9999/foo/bar', function(error, response) {
+    request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisper_called());
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, body);
       done();
@@ -225,9 +247,9 @@ suite('connect-wwwhisper', function () {
       res.end();
     };
 
-    request('http://localhost:9999/foo/bar', function(error, response) {
+    request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisper_called());
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, 'abcdefghi');
       done();
@@ -247,8 +269,8 @@ suite('connect-wwwhisper', function () {
       assert(false);
     };
 
-    request('http://localhost:9999' + path, function(error, response) {
-      assert.ifError(error);
+    request('http://localhost:9999' + path, function(response) {
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['user'], undefined);
       assert(response.body, 'Login page');
@@ -265,12 +287,14 @@ suite('connect-wwwhisper', function () {
     app_handler = html_doc;
 
     var req_options = {
-      url: 'http://localhost:9999/foo/bar',
+      hostname: 'localhost',
+      port: 9999,
+      path: '/foo/bar',
       headers: {
         Cookie: 'wwwhisper-auth=xyz; wwwhisper-csrftoken=abc'
       }
     };
-    request(req_options, function(error, response) {
+    request(req_options, function(response) {
       assert(wwwhisper_called());
       assert.equal(response.statusCode, 200);
       assert(response.body.indexOf('Hello World') > -1);
@@ -287,13 +311,15 @@ suite('connect-wwwhisper', function () {
     app_handler = html_doc;
 
     var req_options = {
-      url: 'http://localhost:9999/foo/bar',
+      hostname: 'localhost',
+      port: 9999,
+      path: '/foo/bar',
       headers: {
         Cookie: 'session=123; wwwhisper-auth=xyz; ' +
           'settings=foobar; wwwhisper-csrftoken=abc'
       }
     };
-    request(req_options, function(error, response) {
+    request(req_options, function(response) {
       assert(wwwhisper_called());
       assert.equal(response.statusCode, 200);
       assert(response.body.indexOf('Hello World') > -1);
@@ -308,7 +334,7 @@ suite('connect-wwwhisper', function () {
     };
     app_handler = html_doc;
 
-    request('http://localhost:9999/foo/bar', function(error, response) {
+    request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisper_called());
       assert.equal(response.statusCode, 200);
       done();
@@ -327,7 +353,7 @@ suite('connect-wwwhisper', function () {
       };
 
       request('http://localhost:9999' + requested_path,
-              function(error, response) {
+              function(response) {
                 assert(wwwhisper_called());
                 assert.equal(response.statusCode, 200);
                 assert.equal(response.headers['user'], TEST_USER);
@@ -382,7 +408,7 @@ suite('connect-wwwhisper', function () {
     };
 
     request('http://localhost:9999' + url,
-            function(error, response) {
+            function(response) {
               assert(wwwhisper_called());
               assert.equal(response.statusCode, 200);
               assert(response.body.indexOf('Hello World') >= 0);
@@ -408,15 +434,17 @@ suite('connect-wwwhisper', function () {
     };
 
     var req_options = {
-      url: 'http://localhost:9999' + path,
+      hostname: 'localhost',
+      port: 9999,
+      path: path,
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
       }
     };
 
-    request(req_options, function(error, response) {
+    request(req_options, function(response) {
       assert.equal(auth_call_count, 2);
-      assert.ifError(error);
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, 'Admin page');
       done();
@@ -434,7 +462,7 @@ suite('connect-wwwhisper', function () {
       assert(false);
     };
 
-    request('http://localhost:9999' + path, function(error, response) {
+    request('http://localhost:9999' + path, function(response) {
       assert(wwwhisper_called());
       assert.equal(response.statusCode, 400);
       assert.equal(response.body, 'invalid request');
@@ -459,14 +487,16 @@ suite('connect-wwwhisper', function () {
     };
 
     var req_options = {
-      url: 'http://localhost:9999' + path,
+      hostname: 'localhost',
+      port: 9999,
+      path: path,
       headers: {
         'X-Forwarded-Proto': 'https',
       }
     };
 
-    request(req_options, function(error, response) {
-      assert.ifError(error);
+    request(req_options, function(response) {
+      assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, 'Admin page');
       done();
@@ -476,7 +506,7 @@ suite('connect-wwwhisper', function () {
   test('auth server connection setup error', function(done) {
     auth_server.close();
     auth_server = null;
-    request('http://localhost:9999/foo', function(error, response) {
+    request('http://localhost:9999/foo', function(response) {
       assert.equal(response.statusCode, 500);
       assert.equal(response.body, 'auth request failed');
       done();
@@ -494,7 +524,7 @@ suite('connect-wwwhisper', function () {
     app_handler = function() {
       assert(false);
     };
-    request('http://localhost:9999/wwwhisper/admin', function(error, response) {
+    request('http://localhost:9999/wwwhisper/admin', function(response) {
       assert.equal(response.statusCode, 500);
       assert.equal(response.body, 'request to wwwhisper failed');
       done();
