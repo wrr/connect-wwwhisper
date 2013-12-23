@@ -19,7 +19,7 @@
   ],
   "main": "lib/connect-wwwhisper",
   "engines": {
-    "node": ">= 0.10.0"
+    "node": ">= 0.10.0 < 0.11"
   },
   "dependencies": {
     "connect": ">= 2.7.2",
