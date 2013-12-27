@@ -57,7 +57,7 @@ suite('connect-wwwhisper', function() {
    */
   function request(url, callback) {
     var req = http.request(url, function(response) {
-      response.body = "";
+      response.body = '';
       response.error = false;
       response.on('data', function(chunk) {
         response.body += chunk;
@@ -68,7 +68,7 @@ suite('connect-wwwhisper', function() {
       response.on('error', function() {
         callback(response);
         response.error = true;
-      })
+      });
     });
     req.end();
   }
@@ -530,4 +530,15 @@ suite('connect-wwwhisper', function() {
       done();
     });
   });
+
+  test('node version runtime check', function(done) {
+    process.version = '0.8.12';
+    assert.throws(wwwhisper,
+                  function(err) {
+                    return ((err instanceof Error) &&
+                            /wwwhipsper requires node version 0.10/.test(err));
+                  });
+    done();
+  });
+
 });
