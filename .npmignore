@@ -2,4 +2,7 @@
 .gitignore
 npm-debug.log
 *~
+*\#*
+*tgz
 notes.txt
+index.js
