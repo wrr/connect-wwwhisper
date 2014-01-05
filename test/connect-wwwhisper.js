@@ -1,3 +1,20 @@
+/*
+ * Connect middleware that uses wwwhisper service to authorize visitors.
+ * Copyright (C) 2013, 2014 Jan Wrobel <wrr@mixedbit.org>
+ *
+ * This program is freely distributable under the terms of the
+ * Simplified BSD License. See COPYING.
+ *
+ * The middleware is based on wwwhisper Rack middleware:
+ * https://github.com/wrr/rack-wwwhisper Functionality and test cases
+ * are identical. The only difference is that the Connect middleware
+ * does not attempt to change public caching to private caching for
+ * wwwhisper-protected content served over HTTP. Serious wwwhisper
+ * deployments need to use HTTPS anyway, and returning correct cache
+ * control headers should be better left as a responsibility of the
+ * application.
+ */
+
 var assert = require('assert');
 var connect = require('connect');
 var http = require('http');
