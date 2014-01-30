@@ -344,6 +344,29 @@ suite('connect-wwwhisper', function() {
     });
   });
 
+  test('wwwhisper cookies missing, other cookies present', function(done) {
+    auth_handler = function(req, res) {
+      assert.equal(req.headers['cookie'], undefined);
+      grant(req, res);
+    };
+    app_handler = html_doc;
+
+    var req_options = {
+      hostname: 'localhost',
+      port: 9999,
+      path: '/foo/bar',
+      headers: {
+        Cookie: 'session=123;'
+      }
+    };
+    request(req_options, function(response) {
+      assert(wwwhisper_called());
+      assert.equal(response.statusCode, 200);
+      assert(response.body.indexOf('Hello World') > -1);
+      done();
+    });
+  });
+
   test('library version passed to wwwhisper', function(done) {
     auth_handler = function(req, res) {
       assert.equal(req.headers['user-agent'], 'node-1.1.1');

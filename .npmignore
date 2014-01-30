@@ -1,6 +1,5 @@
-.git
-.gitignore
-npm-debug.log
+\.*
+*.log
 *~
 *\#*
 *tgz
