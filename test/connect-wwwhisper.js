@@ -90,9 +90,9 @@ suite('connect-wwwhisper', function() {
     req.end();
   }
 
-  function setupAppServer() {
+  function setupAppServer(inject_logout_iframe) {
     var app = connect()
-      .use(wwwhisper())
+      .use(wwwhisper(inject_logout_iframe))
       .use(function(req, res){
         app_handler(req, res);
       });
@@ -250,6 +250,22 @@ suite('connect-wwwhisper', function() {
       assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, body);
+      done();
+    });
+  });
+
+  test('iframe not injected when injection disabled', function(done) {
+    auth_handler = grant;
+    app_handler = html_doc;
+    app_server.close();
+    setupAppServer(false);
+
+    request('http://localhost:9999/foo/bar', function(response) {
+      assert(wwwhisper_called());
+      assert.ifError(response.error);
+      assert.equal(response.statusCode, 200);
+      assert(response.body.indexOf('Hello World') >= 0);
+      assert(response.body.search(/<script.*src="\/wwwhisper.*/) === -1);
       done();
     });
   });
