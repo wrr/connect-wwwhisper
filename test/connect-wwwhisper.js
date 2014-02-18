@@ -222,6 +222,26 @@ suite('connect-wwwhisper', function() {
     });
   });
 
+  test('redirect passed from wwwhisper to client', function(done) {
+    auth_handler = function(req, res) {
+      res.writeHead(302, {
+        'location': 'https://localhost:9999/foo/bar',
+      });
+      res.end();
+    };
+    app_handler = function() {
+      assert(false);
+    };
+
+    request('http://localhost:9999/foo/bar', function(response) {
+      assert.ifError(response.error);
+      assert.equal(response.statusCode, 302);
+      assert.equal(response.headers['location'],
+                   'https://localhost:9999/foo/bar');
+      done();
+    });
+  });
+
   test('iframe injected to html response', function(done) {
     auth_handler = grant;
     app_handler = html_doc;
