@@ -607,14 +607,4 @@ suite('connect-wwwhisper', function() {
     });
   });
 
-  test('node version runtime check', function(done) {
-    process.version = '0.8.12';
-    assert.throws(wwwhisper,
-                  function(err) {
-                    return ((err instanceof Error) &&
-                            /wwwhipsper requires node version 0.10/.test(err));
-                  });
-    done();
-  });
-
 });
