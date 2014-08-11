@@ -497,9 +497,13 @@ suite('connect-wwwhisper', function() {
     var path = '/wwwhisper/admin/api/users/xyz';
     auth_handler = function(req, res) {
       if (auth_call_count === 0) {
+        // Auth request should have only minimal set of headers forwarded.
+        assert.equal(req.headers['x-requested-with'], undefined);
+        assert.equal(req.headers['content-length'], undefined);
         grant(req, res);
       } else {
         assert.equal(req.headers['x-requested-with'], 'XMLHttpRequest');
+        assert.equal(req.headers['content-length'], 0);
         auth_call_count += 1;
         res.writeHead(200, {'Content-Type': 'text/plain'});
         res.end('Admin page');
@@ -515,6 +519,7 @@ suite('connect-wwwhisper', function() {
       path: path,
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
+        'Content-Length': 0
       }
     };
 
