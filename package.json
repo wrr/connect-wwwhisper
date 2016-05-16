@@ -1,7 +1,7 @@
 {
   "name": "connect-wwwhisper",
   "description": "A middleware to authenticate and authorize requests via wwwhisper auth backend.",
-  "version": "0.1.14",
+  "version": "0.1.15",
   "homepage": "https://github.com/wrr/connect-wwwhisper",
   "author": "Jan Wrobel <wrr@mixedbit.org>",
   "repository": {
