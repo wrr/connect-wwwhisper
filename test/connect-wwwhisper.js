@@ -58,9 +58,18 @@ suite('connect-wwwhisper', function() {
     res.end();
   }
 
+  var TEST_HTML_BODY = '<html><body><b>Hello World</body></html>';
   function htmlDoc(req, res) {
     res.writeHead(200, {'Content-Type': 'text/html'});
-    res.end('<html><body><b>Hello World</body></html>');
+    res.end(TEST_HTML_BODY);
+  }
+
+  function gzipedHtmlDoc(req, res) {
+    res.writeHead(200, {
+      'Content-Type': 'text/html',
+      'Content-Encoding': 'gzip'
+    });
+    res.end(TEST_HTML_BODY);
   }
 
   function authQuery(path) {
@@ -257,19 +266,31 @@ suite('connect-wwwhisper', function() {
   });
 
   test('iframe not injected to non-html response', function(done) {
-    var body = '<html><body><b>Hello World</body></html>';
     authHandler = grant;
     appHandler = function(req, res) {
       assert.equal(req.remoteUser, TEST_USER);
       res.writeHead(200, {'Content-Type': 'text/plain'});
-      res.end(body);
+      res.end(TEST_HTML_BODY);
     };
 
     request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisperCalled());
       assert.ifError(response.error);
       assert.equal(response.statusCode, 200);
-      assert.equal(response.body, body);
+      assert.equal(response.body, TEST_HTML_BODY);
+      done();
+    });
+  });
+
+  test('iframe not injected to gziped html response', function(done) {
+    authHandler = grant;
+    appHandler = gzipedHtmlDoc;
+
+    request('http://localhost:9999/foo/bar', function(response) {
+      assert(wwwhisperCalled());
+      assert.ifError(response.error);
+      assert.equal(response.statusCode, 200);
+      assert.equal(response.body, TEST_HTML_BODY);
       done();
     });
   });
