@@ -148,7 +148,7 @@ suite('connect-wwwhisper', function() {
     setupAppServer();
     request('http://localhost:9999', function(response) {
       assert(!wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert(response.body.indexOf('Hello World') > -1);
       done();
@@ -168,7 +168,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999' + path, function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['user'], TEST_USER);
       assert(response.body.indexOf('Hello World') >= 0);
@@ -190,7 +190,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999' + path, function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['user'], undefined);
       assert(response.body.indexOf('Hello World') >= 0);
@@ -207,7 +207,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 401);
       assert.equal(response.headers['user'], undefined);
       assert(response.body.indexOf('Login required') >= 0);
@@ -223,7 +223,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 403);
       assert.equal(response.headers['user'], undefined);
       assert(response.body.indexOf('Not authorized') >= 0);
@@ -243,7 +243,7 @@ suite('connect-wwwhisper', function() {
     };
 
     request('http://localhost:9999/foo/bar', function(response) {
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 302);
       assert.equal(response.headers['location'],
                    'https://localhost:9999/foo/bar');
@@ -257,7 +257,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert(response.body.indexOf('Hello World') >= 0);
       assert(response.body.search(/<script.*src="\/wwwhisper.*/) >= 0);
@@ -275,7 +275,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, TEST_HTML_BODY);
       done();
@@ -288,7 +288,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, TEST_HTML_BODY);
       done();
@@ -303,7 +303,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert(response.body.indexOf('Hello World') >= 0);
       assert(response.body.search(/<script.*src="\/wwwhisper.*/) === -1);
@@ -323,7 +323,7 @@ suite('connect-wwwhisper', function() {
 
     request('http://localhost:9999/foo/bar', function(response) {
       assert(wwwhisperCalled());
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, 'abcdefghi');
       done();
@@ -344,7 +344,7 @@ suite('connect-wwwhisper', function() {
     };
 
     request('http://localhost:9999' + path, function(response) {
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert.equal(response.headers['user'], undefined);
       assert(response.body, 'Login page');
@@ -546,7 +546,7 @@ suite('connect-wwwhisper', function() {
 
     request(reqOptions, function(response) {
       assert.equal(authCallCount, 2);
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, 'Admin page');
       done();
@@ -598,7 +598,7 @@ suite('connect-wwwhisper', function() {
     };
 
     request(reqOptions, function(response) {
-      assert.ifError(response.error);
+      assert.equal(response.error, false);
       assert.equal(response.statusCode, 200);
       assert.equal(response.body, 'Admin page');
       done();
