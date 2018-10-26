@@ -26,12 +26,12 @@
     "connect": ">= 2.7.2",
     "@types/connect": "*",
     "connect-injector": "0.4.4",
-    "url": "*",
-    "urijs": ">= 1.10.2"
+    "urijs": ">= 1.10.2",
+    "url": "*"
   },
   "devDependencies": {
-    "grunt": "~0.4.1",
-    "grunt-contrib-jshint": "~0.6.0",
+    "grunt": "*",
+    "grunt-contrib-jshint": "*",
     "mocha": "3.5.3"
   },
   "scripts": {
