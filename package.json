@@ -1,9 +1,9 @@
 {
   "name": "connect-wwwhisper",
   "description": "A middleware to authenticate and authorize requests via wwwhisper auth backend.",
-  "version": "0.1.21",
+  "version": "0.1.22",
   "homepage": "https://github.com/wrr/connect-wwwhisper",
-  "author": "Jan Wrobel <jan@wwwhisper.io>",
+  "author": "Jan Wrobel <jan@mixedbit.org>",
   "repository": {
     "type": "git",
     "url": "git://github.com/wrr/connect-wwwhisper.git"
@@ -23,8 +23,8 @@
   },
   "types": "lib/connect-wwwhisper.d.ts",
   "dependencies": {
-    "connect": ">= 2.7.2",
     "@types/connect": "*",
+    "connect": ">= 2.7.2",
     "connect-injector": "0.4.4",
     "urijs": ">= 1.10.2",
     "url": "*"
