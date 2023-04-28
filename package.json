@@ -19,7 +19,7 @@
   ],
   "main": "lib/connect-wwwhisper",
   "engines": {
-    "node": ">= 0.10.0 <= 13.0.0"
+    "node": ">= 0.10.0 < 21.0.0"
   },
   "types": "lib/connect-wwwhisper.d.ts",
   "dependencies": {
@@ -32,10 +32,10 @@
   "devDependencies": {
     "grunt": "*",
     "grunt-contrib-jshint": "*",
-    "mocha": "3.5.3"
+    "mocha": "10.2.0"
   },
   "scripts": {
-    "test": "mocha -R list --ui tdd test/"
+    "test": "mocha -R list --ui tdd --exit test/"
   },
   "keywords": [
     "connect",
