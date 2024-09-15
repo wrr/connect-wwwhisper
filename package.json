@@ -19,7 +19,7 @@
   ],
   "main": "lib/connect-wwwhisper",
   "engines": {
-    "node": ">= 0.10.0 < 21.0.0"
+    "node": ">= 0.10.0 < 24.0.0"
   },
   "types": "lib/connect-wwwhisper.d.ts",
   "dependencies": {
@@ -30,8 +30,9 @@
     "url": "*"
   },
   "devDependencies": {
-    "grunt": "*",
+    "grunt": "^1.6.1",
     "grunt-contrib-jshint": "*",
+    "jshint": "^2.13.6",
     "mocha": "10.2.0"
   },
   "scripts": {
